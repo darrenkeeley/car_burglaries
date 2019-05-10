@@ -1,0 +1,48 @@
+## Vehicle Burglaries in SCC 2018
+
+Data procured from: https://data.sccgov.org/Public-Safety/Crime-Reports/n9u6-aijz/data
+
+Zoom in or click to break up clusters
+
+
+```{r, echo=F, message=F}
+library(tidyverse); library(leaflet)
+# Other data source
+# https://data-sccphd.opendata.arcgis.com/
+```
+
+```{r, echo=F, message=F}
+crime_reports <- read_csv("Crime_Reports.csv")
+car_burglaries <- crime_reports %>% filter(incident_type_primary=="VEHICLE BURGLARY")
+# Similar crime: CARJACKING
+```
+
+```{r, echo=F, message=F}
+leaflet(car_burglaries) %>% addTiles() %>% 
+  addMarkers(
+    popup = ~paste("Case number", as.character(case_number), ",", as.character(incident_datetime)), 
+    label = ~as.character(address_1),
+    clusterOptions = markerClusterOptions()
+)
+```
+
+
+<br><br>
+
+```{r, echo=F, message=F}
+car_burglaries_counts <- plyr::count(car_burglaries, vars=c("day_of_week","hour_of_day"))
+car_burglaries_counts$day_of_week <- factor(car_burglaries_counts$day_of_week, ordered = T,
+                                            levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+col1 = "#d8e1cf" 
+col2 = "#438484"
+
+ggplot(car_burglaries_counts, aes(day_of_week, hour_of_day)) + geom_tile(aes(fill = freq),colour = "white", na.rm = T) +
+  scale_fill_gradient(low = col1, high = col2) +  
+  guides(fill=guide_legend(title="Total Incidents")) +
+  theme_bw() + theme_minimal() + 
+  labs(title = "Number of Car Burglaries by Day and Hour",
+       x = "Day of Week", y = "Hour of Day") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+```
+
